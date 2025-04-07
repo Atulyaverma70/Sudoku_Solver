@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sudoku Solver</title>
+    <style>
+        table { border-collapse: collapse; }
+        td { width: 40px; height: 40px; text-align: center; border: 1px solid black; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Sudoku Solver</h1>
+    <table id="sudoku-grid"></table>
+    <button onclick="solveSudoku()">Solve</button>
+    <input type="file" id="imageInput" />
+    <button onclick="uploadImage()">Upload</button>
+
+    <script>
+        function createGrid() {
+            let table = document.getElementById("sudoku-grid");
+            for (let i = 0; i < 9; i++) {
+                let row = table.insertRow();
+                for (let j = 0; j < 9; j++) {
+                    let cell = row.insertCell();
+                    let input = document.createElement("input");
+                    input.type = "number";
+                    input.min = "1"; input.max = "9";
+                    cell.appendChild(input);
+                }
+            }
+        }
+
+        function solveSudoku() {
+            let grid = [];
+            let inputs = document.querySelectorAll("#sudoku-grid input");
+            
+            for (let i = 0; i < 9; i++) {
+                let row = [];
+                for (let j = 0; j < 9; j++) {
+                    let val = inputs[i * 9 + j].value;
+                    row.push(val ? parseInt(val) : 0);
+                }
+                grid.push(row);
+            }
+
+            fetch("/solve", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ grid }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.solved_grid) {
+                    let solved = data.solved_grid;
+                    inputs.forEach((input, index) => input.value = solved[Math.floor(index / 9)][index % 9]);
+                } else {
+                    alert("No solution found or error occurred.");
+                }
+            });
+        }
+
+        function uploadImage() {
+            let file = document.getElementById("imageInput").files[0];
+            let formData = new FormData();
+            formData.append("file", file);
+            fetch("/upload", { method: "POST", body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.grid) {
+                        let inputs = document.querySelectorAll("#sudoku-grid input");
+                        inputs.forEach((input, index) => {
+                            let row = Math.floor(index / 9);
+                            let col = index % 9;
+                            input.value = data.grid[row][col] !== 0 ? data.grid[row][col] : "";
+                        });
+                    } else {
+                        alert("Failed to extract Sudoku grid.");
+                    }
+                });
+        }
+
+        createGrid();
+    </script>
+</body>
+</html>
