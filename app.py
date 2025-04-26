@@ -4,7 +4,7 @@ from sudoku_solver import solve_sudoku
 from ocr_processing import extract_sudoku_grid
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app, resources={r"/*": {"origins": "*"}})  # Fix CORS
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -55,4 +55,4 @@ def api_upload():
         return jsonify({'error': f'Upload error: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False) 
+    app.run(port=5001) 
