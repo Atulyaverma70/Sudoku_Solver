@@ -1,6 +1,6 @@
+# syntax=docker/dockerfile:1
 # Base image
 FROM python:3.9-slim
-
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
