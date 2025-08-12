@@ -42,7 +42,7 @@ body {
 }
 
 #sudokuGrid td {
-    border: 1px solid #bbb;
+    border: 2px solid #000;  /* Bold, dark borders for all cells */
     width: 40px;
     height: 40px;
     padding: 0;
@@ -50,11 +50,11 @@ body {
 }
 
 #sudokuGrid td.thick-right {
-    border-right: 3px solid #1976d2;
+    border-right: 4px solid #000; /* Thicker right border for 3x3 blocks */
 }
 
 #sudokuGrid td.thick-bottom {
-    border-bottom: 3px solid #1976d2;
+    border-bottom: 4px solid #000; /* Thicker bottom border for 3x3 blocks */
 }
 
 #sudokuGrid input {
