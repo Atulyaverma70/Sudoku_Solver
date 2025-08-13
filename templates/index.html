@@ -1,136 +1,169 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Sudoku Solver</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sudoku Solver</title>
+  <style>
+    :root { --b:#222; --g:#e9ecef; --a:#0d6efd; --ok:#198754; --err:#dc3545; --info:#0dcaf0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0f1115; color:#f3f5f7; }
+    header { padding: 20px; text-align: center; border-bottom: 1px solid #23252b; }
+    header h1 { margin: 0; font-size: 1.4rem; }
+    main { max-width: 920px; margin: 24px auto; padding: 0 16px 32px; }
+    .panel { background:#141820; border:1px solid #23252b; border-radius:14px; padding:16px; margin-bottom:16px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .row > * { flex: none; }
+    button { border:1px solid #2a2d36; background:#1b2030; color:#e7ecf3; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
+    button:hover { background:#21283b; }
+    input[type="file"] { padding:10px; border:1px dashed #2a2d36; border-radius:10px; background:#11151e; color:#c8d1dc; }
+    .message { margin-top:8px; padding:10px 12px; border-radius:10px; min-height:20px; }
+    .message.success { background: rgba(25,135,84,0.15); border:1px solid rgba(25,135,84,0.35); }
+    .message.error { background: rgba(220,53,69,0.15); border:1px solid rgba(220,53,69,0.35); }
+    .message.info { background: rgba(13,202,240,0.15); border:1px solid rgba(13,202,240,0.35); }
+    table { border-collapse: collapse; margin: 0 auto; background:#0b0e14; }
+    td { border:1px solid #2b2e39; width:48px; height:48px; padding:0; }
+    input[type="number"] {
+      width:100%; height:100%; text-align:center; font-size:1.25rem;
+      background:#0b0e14; color:#e7ecf3; border:0; outline:none;
+    }
+    .thick-right { border-right:3px solid #5a5f73; }
+    .thick-bottom { border-bottom:3px solid #5a5f73; }
+    .grid-wrap { overflow-x:auto; padding:10px; border-radius:12px; border:1px solid #23252b; background:#121622; }
+    .actions { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+    .hint { font-size:.9rem; color:#aeb6c2; text-align:center; margin-top:6px; }
+    .footer { margin-top:18px; text-align:center; font-size:.85rem; color:#9aa3af; }
+    @media (max-width:600px){ td{ width:38px; height:38px } input[type="number"]{ font-size:1.1rem } }
+  </style>
 </head>
-
-
 <body>
-    <div class="container">
-        <h1>Sudoku Solver</h1>
-        <p class="instructions">
-            You can solve a Sudoku in two ways:<br>
-            1️⃣ Upload an image of the Sudoku puzzle.<br>
-            2️⃣ Enter the numbers directly into the grid.
-        </p>
+  <header>
+    <h1>Sudoku Solver (OCR + AI)</h1>
+  </header>
 
-        <div class="grid-container">
-            <table id="sudokuGrid"></table>
-        </div>
+  <main>
+    <section class="panel">
+      <div class="row">
+        <input id="sudokuImage" type="file" accept="image/*" />
+        <button id="btnSolve">Solve Sudoku</button>
+        <button id="btnClear">Clear</button>
+      </div>
+      <div id="message" class="message"></div>
+      <p class="hint">Upload a Sudoku photo to auto-fill, or type numbers (leave blanks empty). Then click “Solve Sudoku”.</p>
+    </section>
 
-        <div class="controls">
-            <input type="file" id="sudokuImage" accept="image/*" hidden>
-            <button class="btn upload-btn" onclick="document.getElementById('sudokuImage').click()">
-                📷 Upload Image
-            </button>
-            <button class="btn solve-btn" onclick="solveSudoku()">
-                🧩 Solve
-            </button>
-            <button class="btn clear-btn" onclick="clearGrid()">
-                ❌ Clear
-            </button>
-        </div>
+    <section class="panel grid-wrap">
+      <table id="sudokuGrid"></table>
+    </section>
 
-        <div id="message" class="message"></div>
-    </div>
+    <div class="footer">Backend endpoints used: <code>POST /ocr</code>, <code>POST /solve</code>. Keep this page and the API on the same origin, or enable CORS.</div>
+  </main>
 
-    <script>
-        function createGrid() {
-            const grid = document.getElementById('sudokuGrid');
-            for (let i = 0; i < 9; i++) {
-                const row = grid.insertRow();
-                for (let j = 0; j < 9; j++) {
-                    const cell = row.insertCell();
-                    cell.className = `${j % 3 === 2 ? 'thick-right' : ''} ${i % 3 === 2 ? 'thick-bottom' : ''}`;
-                    const input = document.createElement('input');
-                    input.type = 'number';
-                    input.min = 0;
-                    input.max = 9;
-                    input.addEventListener('input', validateInput);
-                    cell.appendChild(input);
-                }
-            }
+  <script>
+    // If your frontend is hosted separately from the backend, set your API base like:
+    // const API = "https://your-backend.onrender.com";
+    // When this HTML is served by the same Flask app, keep it empty:
+    const API = "";
+
+    function createGrid() {
+      const grid = document.getElementById('sudokuGrid');
+      grid.innerHTML = "";
+      for (let i = 0; i < 9; i++) {
+        const row = grid.insertRow();
+        for (let j = 0; j < 9; j++) {
+          const cell = row.insertCell();
+          if (j % 3 === 2) cell.classList.add('thick-right');
+          if (i % 3 === 2) cell.classList.add('thick-bottom');
+          const input = document.createElement('input');
+          input.type = 'number'; input.min = 0; input.max = 9; input.inputMode = 'numeric';
+          input.addEventListener('input', validateInput);
+          cell.appendChild(input);
         }
+      }
+    }
 
-        function validateInput(e) {
-            let value = e.target.value.replace(/[^0-9]/g, '');
-            e.target.value = value.slice(0, 1);
-        }
+    function validateInput(e) {
+      let v = e.target.value.replace(/[^0-9]/g, '');
+      e.target.value = v.slice(0, 1);
+    }
 
-        async function solveSudoku() {
-            showMessage('Solving...', 'info');
-            const inputs = document.querySelectorAll('#sudokuGrid input');
-            const grid = [];
-            inputs.forEach((input, index) => {
-                const row = Math.floor(index / 9);
-                const col = index % 9;
-                if (!grid[row]) grid[row] = [];
-                grid[row][col] = input.value ? parseInt(input.value) : 0;
-            });
+    function getGridFromInputs() {
+      const inputs = document.querySelectorAll('#sudokuGrid input');
+      const grid = Array.from({ length: 9 }, () => Array(9).fill(0));
+      inputs.forEach((input, index) => {
+        const r = Math.floor(index / 9), c = index % 9;
+        grid[r][c] = input.value ? parseInt(input.value) : 0;
+      });
+      return grid;
+    }
 
-            try {
-                const response = await fetch('http://localhost:5000/solve', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ grid })
-                });
+    function setGridToInputs(grid) {
+      const inputs = document.querySelectorAll('#sudokuGrid input');
+      inputs.forEach((input, idx) => {
+        const val = grid[Math.floor(idx / 9)][idx % 9];
+        input.value = val ? val : '';
+      });
+    }
 
-                const data = await response.json();
-                if (response.ok && data.solved_grid) {
-                    data.solved_grid.forEach((row, i) => {
-                        row.forEach((num, j) => {
-                            inputs[i * 9 + j].value = num || '';
-                        });
-                    });
-                    showMessage('Sudoku solved! Ready for another? Clear this one first to continue the challenge.', 'success');
-                } else {
-                    showMessage(data.error || 'Failed to solve', 'error');
-                }
-            } catch (error) {
-                showMessage('Connection error: ' + error.message, 'error');
-            }
-        }
-
-        document.getElementById('sudokuImage').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            showMessage('Processing image...', 'info');
-            const formData = new FormData();
-            formData.append('file', file);
-            try {
-                const response = await fetch('http://localhost:5000/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                if (response.ok && data.grid) {
-                    const inputs = document.querySelectorAll('#sudokuGrid input');
-                    inputs.forEach((input, index) => {
-                        const val = data.grid[Math.floor(index / 9)][index % 9];
-                        input.value = val !== 0 ? val : '';
-                    });
-                    showMessage('Successfully extracted the grid!', 'success');
-                } else {
-                    showMessage(data.error || 'Image processing failed', 'error');
-                }
-            } catch (error) {
-                showMessage('Upload failed: ' + error.message, 'error');
-            }
+    async function solveSudoku() {
+      showMessage('Solving...', 'info');
+      const grid = getGridFromInputs();
+      try {
+        const resp = await fetch(`${API}/solve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ grid })
         });
-
-        function clearGrid() {
-            document.querySelectorAll('#sudokuGrid input').forEach(input => input.value = '');
-            showMessage('', '');
+        const data = await resp.json();
+        if (resp.ok && data.solution) {
+          setGridToInputs(data.solution);
+          showMessage('Sudoku solved!', 'success');
+        } else {
+          showMessage(data.error || 'Failed to solve', 'error');
         }
+      } catch (err) {
+        showMessage('Connection error: ' + err.message, 'error');
+      }
+    }
 
-        function showMessage(text, type) {
-            const msg = document.getElementById('message');
-            msg.textContent = text;
-            msg.className = `message ${type}`;
+    async function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      showMessage('Processing image...', 'info');
+      const formData = new FormData();
+      formData.append('image', file); // Must match backend field name
+
+      try {
+        const resp = await fetch(`${API}/ocr`, { method: 'POST', body: formData });
+        const data = await resp.json();
+        if (resp.ok && data.grid) {
+          setGridToInputs(data.grid);
+          showMessage('Grid extracted from image!', 'success');
+        } else {
+          showMessage(data.error || 'Image processing failed', 'error');
         }
+      } catch (err) {
+        showMessage('Upload failed: ' + err.message, 'error');
+      }
+    }
 
-        createGrid();
-    </script>
+    function clearGrid() {
+      document.querySelectorAll('#sudokuGrid input').forEach(i => i.value = '');
+      showMessage('', '');
+      document.getElementById('sudokuImage').value = '';
+    }
+
+    function showMessage(text, type) {
+      const el = document.getElementById('message');
+      el.textContent = text;
+      el.className = `message ${type || ''}`;
+    }
+
+    document.getElementById('btnSolve').addEventListener('click', solveSudoku);
+    document.getElementById('btnClear').addEventListener('click', clearGrid);
+    document.getElementById('sudokuImage').addEventListener('change', handleImageUpload);
+
+    createGrid();
+  </script>
 </body>
 </html>
