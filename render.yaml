@@ -1,7 +1,6 @@
 services:
   - type: web
-    name: sudoku-solver
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app -b 0.0.0.0:$PORT
+    name: sudoku-backend
+    env: docker
+    plan: free
     autoDeploy: true
