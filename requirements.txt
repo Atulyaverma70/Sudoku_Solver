@@ -1,11 +1,7 @@
-Flask==3.0.3
-gunicorn==22.0.0
-opencv-python-headless==4.10.0.84
-pillow==10.4.0
-pytesseract==0.3.10
-numpy==1.26.4
-flask-cors==4.0.1
 Flask
+gunicorn
+flask-cors
 opencv-python-headless
-numpy
 pillow
+numpy
+pytesseract

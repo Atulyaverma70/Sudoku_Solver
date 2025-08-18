@@ -24,12 +24,13 @@ def _500(e):
 def health():
     return {"status": "ok"}
 
-# quick diag to confirm tesseract is present and where
 @app.get("/diag")
 def diag():
+    import pytesseract
     return {
-        "tesseract_in_path": shutil.which("tesseract") or "",
-        "TESSERACT_CMD_env": os.environ.get("TESSERACT_CMD", ""),
+        "which_tesseract": shutil.which("tesseract") or "",
+        "pytesseract_cmd": pytesseract.pytesseract.tesseract_cmd,
+        "env_TESSERACT_CMD": os.environ.get("TESSERACT_CMD", "")
     }
 
 @app.get("/")
