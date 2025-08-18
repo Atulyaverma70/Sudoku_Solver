@@ -1,27 +1,29 @@
-FROM python:3.11-slim
+# Use slim python base
+FROM python:3.10-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# install tesseract binary
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies (tesseract + OpenCV deps)
+RUN apt-get update && apt-get install -y \
     tesseract-ocr \
-    tesseract-ocr-eng \
+    libtesseract-dev \
+    libleptonica-dev \
+    libgl1 \
     libglib2.0-0 \
-    libsm6 \
-    libxrender1 \
-    libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# tell pytesseract where to find it
-ENV TESSERACT_CMD=/usr/bin/tesseract
-
+# Set work directory
 WORKDIR /app
 
+# Copy requirement files first for caching
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy project files
 COPY . .
 
+# Expose port (Render injects $PORT)
+EXPOSE 10000
 
-CMD ["bash", "-lc", "gunicorn -b 0.0.0.0:$PORT app:app"]
+# Use gunicorn in production
+CMD gunicorn app:app --bind 0.0.0.0:$PORT
