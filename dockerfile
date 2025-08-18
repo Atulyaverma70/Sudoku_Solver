@@ -1,22 +1,28 @@
 FROM python:3.11-slim
 
-# System deps for OpenCV and Tesseract
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      tesseract-ocr \
-      libgl1 \
-      libglib2.0-0 && \
-    rm -rf /var/lib/apt/lists/*
+# Install system dependencies (tesseract and opencv dependencies)
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
 
-# App
+# Set workdir
 WORKDIR /app
+
+# Copy requirements
 COPY requirements.txt .
+
+# Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source
+# Copy project files
 COPY . .
 
-# Env
-ENV PYTHONUNBUFFERED=1
-# Render provides $PORT; gunicorn will bind to it
-CMD exec gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 2 --threads 4 app:app
+# Expose port
+EXPOSE 10000
+
+# Start gunicorn for Render
+CMD ["gunicorn", "-b", "0.0.0.0:10000", "app:app"]
