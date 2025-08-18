@@ -55,21 +55,25 @@ def solve():
     return jsonify({"error": "unsolvable"}), 422
 
 
-# OCR API
 @app.post("/ocr")
 def ocr():
     if "image" not in request.files:
         return jsonify({"error": "image file missing"}), 400
 
     f = request.files["image"]
-    tmp_path = "/tmp/upload.jpg"  # safe path on Render
+    tmp_path = "/tmp/upload.jpg"
     f.save(tmp_path)
 
-    grid = extract_sudoku_grid(tmp_path)
-    if not grid:
-        return jsonify({"error": "could not extract grid"}), 422
+    try:
+        grid = extract_sudoku_grid(tmp_path)
+        if not grid:
+            return jsonify({"error": "could not extract grid"}), 422
+        return jsonify({"grid": grid})
+    except Exception as e:
+        import traceback, sys
+        traceback.print_exc(file=sys.stderr)  # log to Render logs
+        return jsonify({"error": f"OCR crashed: {str(e)}"}), 500
 
-    return jsonify({"grid": grid})
 
 
 # Entry point for Render
