@@ -5,3 +5,7 @@ pillow==10.4.0
 pytesseract==0.3.10
 numpy==1.26.4
 flask-cors==4.0.1
+Flask
+opencv-python-headless
+numpy
+pillow
