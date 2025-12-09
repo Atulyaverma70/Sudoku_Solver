@@ -1,0 +1,18 @@
+├── .gitignore
+├── .vscode
+    ├── c_cpp_properties.json
+    ├── launch.json
+    └── settings.json
+├── app.py
+├── dockerfile
+├── ocr_processing.py
+├── render.yaml
+├── requirements.txt
+├── run_sudoku.py
+├── static
+    └── style.css
+├── sudoku_solver.exe
+├── sudoku_solver.py
+├── templates
+    └── index.html
+└── test_request.py
