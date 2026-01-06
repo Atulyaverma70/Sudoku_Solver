@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os, sys, shutil
 
@@ -12,51 +12,39 @@ CORS(app)
 def _log():
     print(f"--> {request.method} {request.path}", file=sys.stderr)
 
-@app.errorhandler(404)
-def _404(e):
-    return jsonify({"error": "not found"}), 404
-
-@app.errorhandler(500)
-def _500(e):
-    return jsonify({"error": "internal server error"}), 500
-
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-@app.get("/diag")
-def diag():
-    import pytesseract
-    return {
-        "which_tesseract": shutil.which("tesseract") or "",
-        "pytesseract_cmd": pytesseract.pytesseract.tesseract_cmd,
-        "env_TESSERACT_CMD": os.environ.get("TESSERACT_CMD", "")
-    }
-
 @app.get("/")
 def home():
-    return render_template("index.html")
+    return send_from_directory("templates", "index.html")
 
 @app.post("/solve")
 def solve():
     data = request.get_json(silent=True)
     if not data or "grid" not in data:
         return jsonify({"error": "invalid or missing JSON body"}), 400
+
     grid = data["grid"]
     if not isinstance(grid, list) or len(grid) != 9 or any(len(r) != 9 for r in grid):
         return jsonify({"error": "grid must be 9x9 integers"}), 400
+
     work = [row[:] for row in grid]
     if solve_sudoku(work):
         return jsonify({"solution": work})
+
     return jsonify({"error": "unsolvable"}), 422
 
 @app.post("/ocr")
 def ocr():
     if "image" not in request.files:
         return jsonify({"error": "image file missing"}), 400
+
     f = request.files["image"]
     tmp_path = "/tmp/upload.jpg"
     f.save(tmp_path)
+
     try:
         grid = extract_sudoku_grid(tmp_path)
         if not grid:
@@ -65,8 +53,4 @@ def ocr():
     except Exception as e:
         import traceback
         traceback.print_exc(file=sys.stderr)
-        return jsonify({"error": f"OCR crashed: {str(e)}"}), 500
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+        return jsonify({"error": str(e)}), 500
