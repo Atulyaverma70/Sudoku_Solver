@@ -1,21 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Sudoku Solver</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ✅ THIS WAS MISSING -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+<div class="container">
     <h1>Sudoku Solver</h1>
 
-    <div id="grid"></div>
-
-    <div class="buttons">
-        <button onclick="solveSudoku()">Solve</button>
-        <input type="file" id="imageInput" accept="image/*" />
-        <button onclick="uploadImage()">Solve via Image</button>
+    <!-- Upload Box -->
+    <div class="upload-box">
+        <input type="file" id="imageInput" accept="image/*">
+        <p>Upload an image to auto detect all the digits</p>
     </div>
 
-    <script src="/static/script.js"></script>
+    <!-- Sudoku Grid -->
+    <div id="grid" class="grid"></div>
+
+    <!-- Buttons -->
+    <div class="buttons">
+        <button class="primary" id="solveBtn">Solve</button>
+        <button class="secondary" id="clearBtn">Clear</button>
+    </div>
+</div>
+
+<!-- JS -->
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

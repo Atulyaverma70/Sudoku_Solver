@@ -1,6 +1,6 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import os, sys, shutil
+import sys
 
 from sudoku_solver import solve_sudoku
 from ocr_processing import extract_sudoku_grid
@@ -18,7 +18,7 @@ def health():
 
 @app.get("/")
 def home():
-    return send_from_directory("templates", "index.html")
+    return render_template("index.html")
 
 @app.post("/solve")
 def solve():
@@ -54,3 +54,6 @@ def ocr():
         import traceback
         traceback.print_exc(file=sys.stderr)
         return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
