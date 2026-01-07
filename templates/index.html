@@ -1,11 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sudoku Solver</title>
+    <meta charset="UTF-8" />
+    <title>Sudoku Solver</title>
+    <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div id="root"></div>
+    <h1>Sudoku Solver</h1>
+
+    <div id="grid"></div>
+
+    <div class="buttons">
+        <button onclick="solveSudoku()">Solve</button>
+        <input type="file" id="imageInput" accept="image/*" />
+        <button onclick="uploadImage()">Solve via Image</button>
+    </div>
+
+    <script src="/static/script.js"></script>
 </body>
 </html>
