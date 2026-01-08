@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sudoku-backend
+    name: sudoku-solver
     env: docker
     plan: free
     autoDeploy: true
